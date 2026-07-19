@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+mariadb -uroot -p"${MARIADB_ROOT_PASSWORD}" <<SQL
+CREATE USER IF NOT EXISTS '${MARIADB_USER}'@'%' IDENTIFIED BY '${MARIADB_PASSWORD}';
+GRANT ALL PRIVILEGES ON \`${MARIADB_DATABASE}\`.* TO '${MARIADB_USER}'@'%';
+GRANT ALL PRIVILEGES ON \`schedule_management\`.* TO '${MARIADB_USER}'@'%';
+FLUSH PRIVILEGES;
+SQL

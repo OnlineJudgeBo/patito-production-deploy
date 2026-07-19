@@ -1,0 +1,9 @@
+http:
+  middlewares:
+    compress:
+      compress: {}
+    traefik-auth:
+      basicAuth:
+        users:
+          # admin / admin.
+          - "admin:$$apr1$$uu4HPWOl$$SgwvHG1EEScyCH.Wu4cXW0"

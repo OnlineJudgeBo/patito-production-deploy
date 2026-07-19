@@ -1,0 +1,100 @@
+services:
+  traefik:
+    image: traefik:v3.1
+    restart: unless-stopped
+    command:
+      - --api.dashboard=true
+      - --entrypoints.web.address=:80
+      - --entrypoints.web.http.redirections.entrypoint.to=websecure
+      - --entrypoints.web.http.redirections.entrypoint.scheme=https
+      - --entrypoints.web.http.redirections.entrypoint.permanent=true
+      - --entrypoints.websecure.address=:443
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --providers.file.directory=/etc/traefik/dynamic
+      - --providers.file.watch=true
+      - --certificatesresolvers.${TRAEFIK_CERT_RESOLVER}.acme.email=${TRAEFIK_ACME_EMAIL}
+      - --certificatesresolvers.${TRAEFIK_CERT_RESOLVER}.acme.storage=/letsencrypt/acme.json
+      - --certificatesresolvers.${TRAEFIK_CERT_RESOLVER}.acme.httpchallenge=true
+      - --certificatesresolvers.${TRAEFIK_CERT_RESOLVER}.acme.httpchallenge.entrypoint=web
+      - --log.level=${TRAEFIK_LOG_LEVEL}
+      - --accesslog=true
+    ports:
+      - "${TRAEFIK_HTTP_PORT}:80"
+      - "${TRAEFIK_HTTPS_PORT}:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik/dynamic:/etc/traefik/dynamic:ro
+      - ./traefik/letsencrypt:/letsencrypt
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.traefik.rule: Host(`${TRAEFIK_DASHBOARD_HOST}`)
+      traefik.http.routers.traefik.entrypoints: websecure
+      traefik.http.routers.traefik.tls: "true"
+      traefik.http.routers.traefik.tls.certresolver: ${TRAEFIK_CERT_RESOLVER}
+      traefik.http.routers.traefik.service: api@internal
+      traefik.http.routers.traefik.middlewares: traefik-auth@file
+
+  patito-db:
+    ports: !reset []
+
+  patito-web:
+    ports: !reset []
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.patito-web.rule: Host(`${PATITO_HOST}`)
+      traefik.http.routers.patito-web.entrypoints: websecure
+      traefik.http.routers.patito-web.tls: "true"
+      traefik.http.routers.patito-web.tls.certresolver: ${TRAEFIK_CERT_RESOLVER}
+      traefik.http.routers.patito-web.priority: 1
+      traefik.http.routers.patito-web.middlewares: compress@file
+      traefik.http.services.patito-web.loadbalancer.server.port: 80
+
+  api:
+    ports: !reset []
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.admin-api.rule: Host(`${PATITO_HOST}`) && PathPrefix(`/api`)
+      traefik.http.routers.admin-api.entrypoints: websecure
+      traefik.http.routers.admin-api.tls: "true"
+      traefik.http.routers.admin-api.tls.certresolver: ${TRAEFIK_CERT_RESOLVER}
+      traefik.http.routers.admin-api.priority: 100
+      traefik.http.routers.admin-api.middlewares: compress@file
+      traefik.http.services.admin-api.loadbalancer.server.port: 8080
+
+  patito-lsp-server:
+    ports: !reset []
+
+  patito-ide:
+    ports: !reset []
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.vibe-ide.rule: Host(`${PATITO_HOST}`) && PathPrefix(`/ide`)
+      traefik.http.routers.vibe-ide.entrypoints: websecure
+      traefik.http.routers.vibe-ide.tls: "true"
+      traefik.http.routers.vibe-ide.tls.certresolver: ${TRAEFIK_CERT_RESOLVER}
+      traefik.http.routers.vibe-ide.priority: 100
+      traefik.http.routers.vibe-ide.middlewares: compress@file
+      traefik.http.services.vibe-ide.loadbalancer.server.port: 3000
+
+  admin-ui:
+    ports: !reset []
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.admin-ui.rule: Host(`${ADMIN_HOST}`)
+      traefik.http.routers.admin-ui.entrypoints: websecure
+      traefik.http.routers.admin-ui.tls: "true"
+      traefik.http.routers.admin-ui.tls.certresolver: ${TRAEFIK_CERT_RESOLVER}
+      traefik.http.routers.admin-ui.middlewares: compress@file
+      traefik.http.services.admin-ui.loadbalancer.server.port: 80
+
+  phpmyadmin:
+    ports: !reset []
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.phpmyadmin.rule: Host(`${PHPMYADMIN_HOST}`)
+      traefik.http.routers.phpmyadmin.entrypoints: websecure
+      traefik.http.routers.phpmyadmin.tls: "true"
+      traefik.http.routers.phpmyadmin.tls.certresolver: ${TRAEFIK_CERT_RESOLVER}
+      traefik.http.routers.phpmyadmin.middlewares: compress@file
+      traefik.http.services.phpmyadmin.loadbalancer.server.port: 80
