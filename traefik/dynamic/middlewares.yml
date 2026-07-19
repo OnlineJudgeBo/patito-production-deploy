@@ -2,8 +2,15 @@ http:
   middlewares:
     compress:
       compress: {}
-    traefik-auth:
-      basicAuth:
-        users:
-          # admin / admin.
-          - "admin:$$apr1$$uu4HPWOl$$SgwvHG1EEScyCH.Wu4cXW0"
+    admin-strip-prefix:
+      stripPrefix:
+        prefixes:
+          - /admin
+    lsp-strip-prefix:
+      stripPrefix:
+        prefixes:
+          - /lsp
+    pma-strip-prefix:
+      stripPrefix:
+        prefixes:
+          - /pma

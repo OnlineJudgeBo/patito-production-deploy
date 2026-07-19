@@ -27,19 +27,18 @@ services:
       - ./traefik/dynamic:/etc/traefik/dynamic:ro
       - ./traefik/letsencrypt:/letsencrypt
     labels:
-      traefik.enable: "true"
-      traefik.http.routers.traefik.rule: Host(`${TRAEFIK_DASHBOARD_HOST}`)
-      traefik.http.routers.traefik.entrypoints: websecure
-      traefik.http.routers.traefik.tls: "true"
-      traefik.http.routers.traefik.tls.certresolver: ${TRAEFIK_CERT_RESOLVER}
-      traefik.http.routers.traefik.service: api@internal
-      traefik.http.routers.traefik.middlewares: traefik-auth@file
+      traefik.enable: "false"
 
   patito-db:
     ports: !reset []
 
   patito-web:
     ports: !reset []
+    environment:
+      APP_DOMAIN: https://${PATITO_HOST}/oj
+      APP_DOMAIN_ADMIN: https://${PATITO_HOST}/admin/
+      APP_DOMAIN_API: https://${PATITO_HOST}/api
+      VIBE_IDE_BASE_URL: https://${PATITO_HOST}/ide/
     labels:
       traefik.enable: "true"
       traefik.http.routers.patito-web.rule: Host(`${PATITO_HOST}`)
@@ -52,9 +51,11 @@ services:
 
   api:
     ports: !reset []
+    environment:
+      Base__Url: https://${PATITO_HOST}
     labels:
       traefik.enable: "true"
-      traefik.http.routers.admin-api.rule: Host(`${PATITO_HOST}`) && PathPrefix(`/api`)
+      traefik.http.routers.admin-api.rule: Host(`${PATITO_HOST}`) && (Path(`/api`) || PathPrefix(`/api/`))
       traefik.http.routers.admin-api.entrypoints: websecure
       traefik.http.routers.admin-api.tls: "true"
       traefik.http.routers.admin-api.tls.certresolver: ${TRAEFIK_CERT_RESOLVER}
@@ -64,12 +65,25 @@ services:
 
   patito-lsp-server:
     ports: !reset []
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.vibe-lsp.rule: Host(`${PATITO_HOST}`) && (Path(`/lsp`) || PathPrefix(`/lsp/`))
+      traefik.http.routers.vibe-lsp.entrypoints: websecure
+      traefik.http.routers.vibe-lsp.tls: "true"
+      traefik.http.routers.vibe-lsp.tls.certresolver: ${TRAEFIK_CERT_RESOLVER}
+      traefik.http.routers.vibe-lsp.priority: 100
+      traefik.http.routers.vibe-lsp.middlewares: lsp-strip-prefix@file
+      traefik.http.services.vibe-lsp.loadbalancer.server.port: 3001
 
   patito-ide:
     ports: !reset []
+    environment:
+      NEXT_PUBLIC_JUDGE_API_URL: https://${PATITO_HOST}/api
+      NEXT_PUBLIC_JUDGE_WS_URL: wss://${PATITO_HOST}/api
+      NEXT_PUBLIC_VIBE_IDE_CONTEXT_URL: https://${PATITO_HOST}/api/vibe/context
     labels:
       traefik.enable: "true"
-      traefik.http.routers.vibe-ide.rule: Host(`${PATITO_HOST}`) && PathPrefix(`/ide`)
+      traefik.http.routers.vibe-ide.rule: Host(`${PATITO_HOST}`) && (Path(`/ide`) || PathPrefix(`/ide/`))
       traefik.http.routers.vibe-ide.entrypoints: websecure
       traefik.http.routers.vibe-ide.tls: "true"
       traefik.http.routers.vibe-ide.tls.certresolver: ${TRAEFIK_CERT_RESOLVER}
@@ -81,20 +95,24 @@ services:
     ports: !reset []
     labels:
       traefik.enable: "true"
-      traefik.http.routers.admin-ui.rule: Host(`${ADMIN_HOST}`)
+      traefik.http.routers.admin-ui.rule: Host(`${PATITO_HOST}`) && (Path(`/admin`) || PathPrefix(`/admin/`))
       traefik.http.routers.admin-ui.entrypoints: websecure
       traefik.http.routers.admin-ui.tls: "true"
       traefik.http.routers.admin-ui.tls.certresolver: ${TRAEFIK_CERT_RESOLVER}
-      traefik.http.routers.admin-ui.middlewares: compress@file
+      traefik.http.routers.admin-ui.priority: 100
+      traefik.http.routers.admin-ui.middlewares: admin-strip-prefix@file,compress@file
       traefik.http.services.admin-ui.loadbalancer.server.port: 80
 
   phpmyadmin:
     ports: !reset []
+    environment:
+      PMA_ABSOLUTE_URI: https://${PATITO_HOST}/pma/
     labels:
       traefik.enable: "true"
-      traefik.http.routers.phpmyadmin.rule: Host(`${PHPMYADMIN_HOST}`)
+      traefik.http.routers.phpmyadmin.rule: Host(`${PATITO_HOST}`) && (Path(`/pma`) || PathPrefix(`/pma/`))
       traefik.http.routers.phpmyadmin.entrypoints: websecure
       traefik.http.routers.phpmyadmin.tls: "true"
       traefik.http.routers.phpmyadmin.tls.certresolver: ${TRAEFIK_CERT_RESOLVER}
-      traefik.http.routers.phpmyadmin.middlewares: compress@file
+      traefik.http.routers.phpmyadmin.priority: 100
+      traefik.http.routers.phpmyadmin.middlewares: pma-strip-prefix@file,compress@file
       traefik.http.services.phpmyadmin.loadbalancer.server.port: 80
