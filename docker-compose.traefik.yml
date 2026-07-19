@@ -46,7 +46,7 @@ services:
       traefik.http.routers.patito-web.tls: "true"
       traefik.http.routers.patito-web.tls.certresolver: ${TRAEFIK_CERT_RESOLVER}
       traefik.http.routers.patito-web.priority: 1
-      traefik.http.routers.patito-web.middlewares: compress@file
+      traefik.http.routers.patito-web.middlewares: oj-trailing-slash@file,compress@file
       traefik.http.services.patito-web.loadbalancer.server.port: 80
 
   api:

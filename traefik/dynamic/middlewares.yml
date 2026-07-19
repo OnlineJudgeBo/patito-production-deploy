@@ -2,6 +2,11 @@ http:
   middlewares:
     compress:
       compress: {}
+    oj-trailing-slash:
+      redirectRegex:
+        regex: "^(https?://[^/]+/oj)$"
+        replacement: "${1}/"
+        permanent: true
     admin-strip-prefix:
       stripPrefix:
         prefixes:
