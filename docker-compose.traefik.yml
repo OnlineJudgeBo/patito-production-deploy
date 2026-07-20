@@ -45,7 +45,7 @@ services:
       traefik.http.routers.patito-web.entrypoints: websecure
       traefik.http.routers.patito-web.tls: "true"
       traefik.http.routers.patito-web.tls.certresolver: ${TRAEFIK_CERT_RESOLVER}
-      traefik.http.routers.patito-web.priority: 1
+      traefik.http.routers.patito-web.priority: 10
       traefik.http.routers.patito-web.middlewares: oj-trailing-slash@file,compress@file
       traefik.http.services.patito-web.loadbalancer.server.port: 80
 
@@ -95,13 +95,16 @@ services:
     ports: !reset []
     labels:
       traefik.enable: "true"
-      traefik.http.routers.admin-ui.rule: Host(`${PATITO_HOST}`) && (Path(`/admin`) || PathPrefix(`/admin/`))
+
+      traefik.http.routers.admin-ui.rule: "Host(`${PATITO_HOST}`) && (Path(`/admin`) || PathPrefix(`/admin/`))"
       traefik.http.routers.admin-ui.entrypoints: websecure
       traefik.http.routers.admin-ui.tls: "true"
       traefik.http.routers.admin-ui.tls.certresolver: ${TRAEFIK_CERT_RESOLVER}
-      traefik.http.routers.admin-ui.priority: 100
-      traefik.http.routers.admin-ui.middlewares: admin-strip-prefix@file,compress@file
-      traefik.http.services.admin-ui.loadbalancer.server.port: 80
+      traefik.http.routers.admin-ui.priority: "300"
+      traefik.http.routers.admin-ui.service: admin-ui
+      traefik.http.routers.admin-ui.middlewares: compress@file
+
+      traefik.http.services.admin-ui.loadbalancer.server.port: "80"
 
   phpmyadmin:
     ports: !reset []
