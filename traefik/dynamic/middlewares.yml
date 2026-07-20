@@ -7,10 +7,6 @@ http:
         regex: "^(https?://[^/]+/oj)$"
         replacement: "${1}/"
         permanent: true
-    admin-strip-prefix:
-      stripPrefix:
-        prefixes:
-          - /admin
     lsp-strip-prefix:
       stripPrefix:
         prefixes:
