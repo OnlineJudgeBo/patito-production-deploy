@@ -107,6 +107,8 @@ services:
   admin-ui:
     image: ghcr.io/onlinejudgebo/patito-admin-ui:main
     restart: unless-stopped
+    volumes:
+     - ./config/admin.config.js:/usr/share/nginx/html/admin/config.js
     depends_on:
       - api
     environment:
@@ -163,8 +165,6 @@ services:
     environment:
       PMA_HOST: patito-db
       PMA_PORT: 3306
-      PMA_USER: root
-      PMA_PASSWORD: ${MARIADB_ROOT_PASSWORD}
       PMA_ABSOLUTE_URI: ${PHPMYADMIN_PUBLIC_URL}
       UPLOAD_LIMIT: ${PHPMYADMIN_UPLOAD_LIMIT}
       TZ: ${TZ}
