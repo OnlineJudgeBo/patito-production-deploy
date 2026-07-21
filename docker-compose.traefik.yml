@@ -77,10 +77,8 @@ services:
 
   patito-ide:
     ports: !reset []
-    environment:
-      NEXT_PUBLIC_JUDGE_API_URL: https://${PATITO_HOST}/api
-      NEXT_PUBLIC_JUDGE_WS_URL: wss://${PATITO_HOST}/api
-      NEXT_PUBLIC_VIBE_IDE_CONTEXT_URL: https://${PATITO_HOST}/api/vibe/context
+    volumes:
+      - ./config/patito-ide.config.json:/app/public/vibe-config.json
     labels:
       traefik.enable: "true"
       traefik.http.routers.vibe-ide.rule: Host(`${PATITO_HOST}`) && (Path(`/ide`) || PathPrefix(`/ide/`))
