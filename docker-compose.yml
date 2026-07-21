@@ -28,8 +28,12 @@ services:
       APP_DOMAIN: ${APP_DOMAIN:-${PATITO_WEB_PUBLIC_URL}/oj}
       APP_DOMAIN_ADMIN: ${APP_DOMAIN_ADMIN:-http://localhost:${ADMIN_UI_PORT}/admin}
       APP_DOMAIN_API: ${APP_DOMAIN_API:-${ADMIN_API_PUBLIC_URL}}
-      JWT_ISS: ${JWT_ISS:-patito}
-      JWT_AUD: ${JWT_AUD:-patito}
+      VIBE_IDE_TOKEN_SECRET: ${VIBE_IDE_TOKEN_SECRET}
+      PATITO_IDE_TOKEN_SECRET: ${VIBE_IDE_TOKEN_SECRET}
+      VIBE_IDE_TOKEN_ISS: ${JWT_ISS}
+      VIBE_IDE_TOKEN_AUD: ${JWT_AUD}
+      JWT_ISS: ${JWT_ISS}
+      JWT_AUD: ${JWT_AUD}
       MAIL_USER_NAME: ${MAIL_USER_NAME:-}
       MAIL_SUBJECT: ${MAIL_SUBJECT:-Juez Virtual}
       MAIL_PASSWORD: ${MAIL_PASSWORD:-}
@@ -40,7 +44,6 @@ services:
       DB_USER: ${MARIADB_USER}
       DB_PASS: ${MARIADB_PASSWORD}
       VIBE_IDE_BASE_URL: ${VIBE_IDE_PUBLIC_URL}
-      VIBE_IDE_TOKEN_SECRET: ${VIBE_IDE_TOKEN_SECRET}
       VIBE_IDE_TOKEN_TTL_SECONDS: ${VIBE_IDE_TOKEN_TTL_SECONDS:-7200}
       TZ: ${TZ}
     volumes:
@@ -98,6 +101,9 @@ services:
       Base__Url: ${PATITO_WEB_PUBLIC_URL}
       FileSettings__ProblemsFilePath: /tmp/zas
       VIBE_IDE_TOKEN_SECRET: ${VIBE_IDE_TOKEN_SECRET}
+      PATITO_IDE_TOKEN_SECRET: ${VIBE_IDE_TOKEN_SECRET}
+      PATITO_IDE_TOKEN_ISS: ${JWT_ISS}
+      PATITO_IDE_TOKEN_AUD: ${JWT_AUD}
       TZ: ${TZ}
     volumes:
       - ./data/judge/data:/tmp/zas
@@ -119,6 +125,7 @@ services:
   patito-lsp-server:
     image: ghcr.io/onlinejudgebo/patito-ide-lsp-server:main
     restart: unless-stopped
+    user: root
     environment:
       PORT: 3001
       HOST: 0.0.0.0
@@ -151,6 +158,8 @@ services:
       NEXT_PUBLIC_VIBE_IDE_CONTEXT_URL: ${VIBE_IDE_CONTEXT_URL}
       LSP_AUTH_TOKEN: ${LSP_AUTH_TOKEN}
       LSP_SERVER_WS_BASE: ws://patito-lsp-server:3001
+      PATITO_IDE_TOKEN_AUD: ${JWT_AUD}
+      PATITO_IDE_TOKEN_ISS: ${JWT_ISS}
       TZ: ${TZ}
     ports:
       - "${VIBE_IDE_PORT}:3000"
