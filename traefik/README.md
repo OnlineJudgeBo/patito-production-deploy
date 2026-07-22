@@ -4,25 +4,33 @@ Este folder contiene archivos de Traefik usados por `../docker-compose.traefik.y
 
 ## Archivos
 
-- `dynamic/middlewares.yml`: middlewares compartidos (`compress` y auth basica para el dashboard).
+- `dynamic/middlewares.yml`: compresion y eliminacion de los prefijos que los backends no conocen.
 - `letsencrypt/`: storage ACME (`acme.json`) para certificados automaticos.
 - `certs/`: reservado para certificados manuales si se decide no usar ACME.
 
-## Hosts por defecto
+## Rutas en un solo host
 
-- `patito.localhost`: Web legacy, API (`/api`) e IDE (`/ide`).
-- `admin.patito.localhost`: Admin UI.
-- `pma.patito.localhost`: phpMyAdmin cuando se levanta con profile `tools`.
-- `traefik.patito.localhost`: dashboard Traefik.
+Todas las rutas usan `PATITO_HOST`:
+
+- `/` y `/oj/`: web legacy.
+- `/api/`: Admin API.
+- `/admin/`: Admin UI, quitando `/admin` antes de llegar a Nginx.
+- `/ide/`: Vibe IDE, que conoce su propio base path.
+- `/lsp/`: servidor LSP/WebSocket, quitando `/lsp` antes de llegar al servidor.
+- `/pma/`: phpMyAdmin opcional, quitando `/pma` antes de llegar a Apache.
+
+El dashboard de Traefik permanece sin router publico.
 
 El overlay publica `80` y `443`: HTTP redirige a HTTPS y Let's Encrypt usa HTTP-01 para emitir certificados.
 
 Antes de produccion:
 
 1. Cambia `TRAEFIK_ACME_EMAIL` en `.env`.
-2. Cambia los hosts `PATITO_HOST`, `ADMIN_HOST`, `PHPMYADMIN_HOST`, `TRAEFIK_DASHBOARD_HOST` a dominios reales.
-3. Apunta esos DNS al servidor.
+2. Configura `PATITO_HOST` con el unico dominio publico.
+3. Apunta ese DNS al servidor.
 4. Abre puertos `80` y `443`.
-5. Cambia las credenciales del dashboard.
+5. Valida la configuracion combinada antes de desplegar:
 
-Credenciales por defecto del dashboard: `admin` / `admin`. Cambialas antes de exponerlo fuera de local.
+   ```bash
+   docker compose -f docker-compose.yml -f docker-compose.traefik.yml --profile tools config --quiet
+   ```
