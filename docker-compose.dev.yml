@@ -1,0 +1,224 @@
+# Local development: builds every service from the repos cloned into ./src.
+# Prepare with ./scripts/init-development-local.sh, then:
+#   docker compose --env-file .env.development -f docker-compose.dev.yml up -d --build
+name: ${COMPOSE_PROJECT_NAME:-patito-dev}
+
+services:
+  patito-db:
+    image: mariadb:11.3
+    environment:
+      MARIADB_ROOT_HOST: "%"
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD:?run scripts/init-development-local.sh first}
+      MARIADB_DATABASE: ${MARIADB_DATABASE}
+      MARIADB_USER: ${MARIADB_USER}
+      MARIADB_PASSWORD: ${MARIADB_PASSWORD}
+      TZ: ${TZ}
+    ports:
+      - "${MARIADB_PORT}:3306"
+    volumes:
+      - ./db/dev_mysql_data:/var/lib/mysql
+      # Same init as production, plus demo users (patito/patito, patitoAdmin/patitoAdmin).
+      - ./db/init/01-jol.sql:/docker-entrypoint-initdb.d/01-jol.sql:ro
+      - ./db/init/02-schedule-management.sql:/docker-entrypoint-initdb.d/02-schedule-management.sql:ro
+      - ./db/init/03-grant-app-user.sh:/docker-entrypoint-initdb.d/03-grant-app-user.sh:ro
+      - ./db/init/04-academic.sql:/docker-entrypoint-initdb.d/04-academic.sql:ro
+      - ./db/init/05-contest-exam-monitoring.sql:/docker-entrypoint-initdb.d/05-contest-exam-monitoring.sql:ro
+      - ./db/init/06-problem-sample-case.sql:/docker-entrypoint-initdb.d/06-problem-sample-case.sql:ro
+      - ./src/patito-client-web/docker/database/02-seed.sql:/docker-entrypoint-initdb.d/90-dev-seed.sql:ro
+    networks:
+      patito:
+        aliases:
+          - patito-judge-db
+    healthcheck:
+      test: ["CMD-SHELL", "mariadb-admin ping -h 127.0.0.1 -uroot -p$${MARIADB_ROOT_PASSWORD} --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 45s
+
+  patito-web:
+    build:
+      context: ./src/patito-client-web
+      dockerfile: docker/docker/php/Dockerfile
+    image: patito-web:dev
+    depends_on:
+      patito-db:
+        condition: service_healthy
+    volumes:
+      - ./src/patito-client-web:/var/www/html/client-web
+      # Overrides the .env.local tracked in the repo with the generated dev config.
+      - ./config/patito-web.dev.env:/var/www/html/client-web/.env.local:ro
+    environment:
+      TZ: ${TZ}
+    ports:
+      - "${PATITO_WEB_PORT}:80"
+    networks:
+      - patito
+
+  patito-judge-kernel:
+    build:
+      context: ./src/onlinejudge-kernel
+    image: patito-judge-kernel:dev
+    restart: unless-stopped
+    depends_on:
+      patito-db:
+        condition: service_healthy
+    user: root
+    environment:
+      LANG: en_US.UTF-8
+      HOME: /home/judge
+      CONF: /home/judge/etc/judge.conf
+      TZ: ${TZ}
+      OJ_HOST_NAME: patito-db
+      OJ_USER_NAME: ${MARIADB_USER}
+      OJ_PASSWORD: ${MARIADB_PASSWORD}
+      OJ_DB_NAME: ${MARIADB_DATABASE}
+      OJ_PORT_NUMBER: 3306
+      OJ_RUNNING: 2
+      OJ_SLEEP_TIME: 5
+      OJ_JAVA_TIME_BONUS: 2
+      OJ_JAVA_MEMORY_BONUS: 64
+      OJ_JAVA_XMS: -Xms64m
+      OJ_JAVA_XMX: -Xmx128m
+      OJ_SIM_ENABLE: 0
+      OJ_OI_MODE: 0
+      OJ_SHM_RUN: 0
+      OJ_USE_MAX_TIME: 1
+      OJ_LANG_SET: 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20
+    entrypoint:
+      - /bin/bash
+      - -lc
+      - /opt/patito/write-judge-conf.sh && exec /usr/bin/judged /home/judge
+    tty: true
+    stdin_open: true
+    volumes:
+      - ./data/dev/judge:/home/judge
+      - ./scripts/write-judge-conf.sh:/opt/patito/write-judge-conf.sh:ro
+    networks:
+      - patito
+
+  api:
+    build:
+      context: ./src/onlinejudgebo-admin-api
+    image: patito-admin-api:dev
+    depends_on:
+      patito-db:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: server=patito-db;database=${MARIADB_DATABASE};user=${MARIADB_USER};pwd=${MARIADB_PASSWORD};AllowZeroDateTime=True;ConvertZeroDateTime=True;convert zero datetime=True
+      ConnectionStrings__ScheduleConnection: server=patito-db;database=schedule_management;user=${MARIADB_USER};pwd=${MARIADB_PASSWORD};AllowZeroDateTime=True;ConvertZeroDateTime=True;convert zero datetime=True
+      ConnectionStrings__AcademicConnection: server=patito-db;database=academic;user=${MARIADB_USER};pwd=${MARIADB_PASSWORD};AllowZeroDateTime=True;ConvertZeroDateTime=True;convert zero datetime=True
+      ConnectionStrings__MysqlMajor: 11
+      ConnectionStrings__MysqlMinor: 3
+      ConnectionStrings__MysqlBuild: 0
+      Base__Url: ${PATITO_WEB_PUBLIC_URL}
+      Jwt__Issuer: ${JWT_ISS}
+      Jwt__Audience: ${JWT_AUD}
+      Jwt__Key: ${JWT_SECRET}
+      FileSettings__ProblemsFilePath: /tmp/zas
+      PATITO_IDE_TOKEN_SECRET: ${VIBE_IDE_TOKEN_SECRET}
+      PATITO_IDE_TOKEN_ISS: ${VIBE_IDE_TOKEN_ISS}
+      PATITO_IDE_TOKEN_AUD: ${VIBE_IDE_TOKEN_AUD}
+      TZ: ${TZ}
+    volumes:
+      - ./data/dev/judge/data:/tmp/zas
+    ports:
+      - "${ADMIN_API_PORT}:8080"
+    networks:
+      - patito
+
+  admin-ui:
+    build:
+      context: ./src/patito-admin-front
+    image: patito-admin-ui:dev
+    depends_on:
+      - api
+    volumes:
+      - ./config/admin.dev.config.js:/usr/share/nginx/html/admin/config.js:ro
+    environment:
+      TZ: ${TZ}
+    ports:
+      - "${ADMIN_UI_PORT}:80"
+    networks:
+      - patito
+
+  patito-lsp-server:
+    build:
+      context: ./src/patito-ide-lsp-server
+    image: patito-ide-lsp-server:dev
+    environment:
+      PORT: 3001
+      HOST: 0.0.0.0
+      LSP_AUTH_TOKEN: ${LSP_AUTH_TOKEN}
+      LSP_WORKSPACE: /workspace
+      JDTLS_WORKSPACE: /tmp/jdtls-workspace
+      LSP_JAVA_ARGS: -data /tmp/jdtls-workspace
+      LSP_CPP_ARGS: --background-index --query-driver=/usr/bin/g++
+      TZ: ${TZ}
+    volumes:
+      - ./data/dev/vibe-lsp/workspace:/workspace
+    ports:
+      - "${VIBE_LSP_PORT}:3001"
+    networks:
+      - patito
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3001/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  patito-ide:
+    build:
+      context: ./src/patito-ide
+    image: patito-ide:dev
+    depends_on:
+      patito-lsp-server:
+        condition: service_healthy
+      api:
+        condition: service_started
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      HOST: 0.0.0.0
+      VIBE_IDE_BASE_PATH: /ide
+      NEXT_PUBLIC_BASE_PATH: /ide
+      NEXT_PUBLIC_JUDGE_API_URL: ${ADMIN_API_PUBLIC_URL}
+      NEXT_PUBLIC_JUDGE_WS_URL: ${ADMIN_API_PUBLIC_WS_URL}
+      NEXT_PUBLIC_VIBE_IDE_CONTEXT_URL: ${VIBE_IDE_CONTEXT_URL}
+      PATITO_IDE_TOKEN_SECRET: ${VIBE_IDE_TOKEN_SECRET}
+      PATITO_IDE_TOKEN_ISS: ${VIBE_IDE_TOKEN_ISS}
+      PATITO_IDE_TOKEN_AUD: ${VIBE_IDE_TOKEN_AUD}
+      LSP_AUTH_TOKEN: ${LSP_AUTH_TOKEN}
+      LSP_SERVER_WS_BASE: ws://patito-lsp-server:3001
+      TZ: ${TZ}
+    volumes:
+      - ./config/patito-ide.dev.json:/app/public/vibe-config.json:ro
+    ports:
+      - "${VIBE_IDE_PORT}:3000"
+    networks:
+      - patito
+
+  phpmyadmin:
+    image: phpmyadmin:5.2-apache
+    profiles:
+      - tools
+    depends_on:
+      patito-db:
+        condition: service_healthy
+    environment:
+      PMA_HOST: patito-db
+      PMA_PORT: 3306
+      PMA_ABSOLUTE_URI: ${PHPMYADMIN_PUBLIC_URL}
+      UPLOAD_LIMIT: 1024M
+      TZ: ${TZ}
+    ports:
+      - "${PHPMYADMIN_PORT}:80"
+    networks:
+      - patito
+
+networks:
+  patito:
+    driver: bridge

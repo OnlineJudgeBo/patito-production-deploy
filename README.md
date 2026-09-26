@@ -25,6 +25,15 @@ Antes de levantar el stack, revisa `.env` y cambia:
 
 No dejes claves de desarrollo en un servidor público.
 
+Los secretos viven solo en `.env` (no versionado). Los archivos de `config/` no llevan secretos:
+
+| Archivo | Se monta en | Contenido |
+| --- | --- | --- |
+| `config/appsettings.json` | API | valores no sensibles; conexiones y `Jwt:*` llegan por variables de entorno |
+| `config/admin.config.js` | panel | URL de la API, `SITE_ID` y logout |
+| `config/patito-ide.config.json` | IDE (Traefik) | rutas `/api/patito-ide/*` del juez |
+| `config/patito-web.env` | web | vacío; la web usa las variables del compose |
+
 Las variables están separadas por grupo en `.env.example`:
 
 | Grupo | Variables principales |
@@ -54,7 +63,7 @@ LSP ──────────> IDE
 
 No hace falta iniciar contenedor por contenedor. `docker compose up -d` levanta el stack y respeta los `depends_on` definidos en el archivo.
 
-Para desarrollo desde el código fuente se usa el `docker-compose.yml` de la carpeta superior. El compose de esta carpeta descarga imágenes ya publicadas.
+Este compose descarga imágenes ya publicadas. Para trabajar sobre el código fuente usa el entorno de [desarrollo local](#desarrollo-local).
 
 ## Levantar por puertos
 
@@ -93,6 +102,52 @@ El DNS de `PATITO_HOST` debe apuntar al servidor. También deben estar abiertos 
 
 La ruta `/` también entra a la web. El dashboard de Traefik no se publica.
 
+## Desarrollo local
+
+`docker-compose.dev.yml` construye todo desde el código fuente. El script clona los repos en `src/` (ignorado por Git), genera secretos locales y prepara la configuración:
+
+```bash
+./scripts/init-development-local.sh          # clona o actualiza los repos
+./scripts/init-development-local.sh --https  # clona por HTTPS en vez de SSH
+./scripts/init-development-local.sh --up     # además construye y levanta el stack
+```
+
+Volver a ejecutarlo actualiza cada repo con `git pull --ff-only`, salvo los que tienen cambios locales.
+
+| Carpeta | Repositorio | Rama |
+| --- | --- | --- |
+| `src/patito-client-web` | `patito-client-web` | `patito2-0` |
+| `src/onlinejudgebo-admin-api` | `onlinejudgebo-admin-api` | `develop` |
+| `src/patito-admin-front` | `patito-admin-front` | `main` |
+| `src/patito-ide` | `patito-ide` | `main` |
+| `src/patito-ide-lsp-server` | `patito-ide-lsp-server` | `main` |
+| `src/onlinejudge-kernel` | `onlinejudge-kernel` | `master` |
+
+Para levantarlo a mano:
+
+```bash
+docker compose --env-file .env.development -f docker-compose.dev.yml up -d --build
+docker compose --env-file .env.development -f docker-compose.dev.yml --profile tools up -d phpmyadmin
+```
+
+| Servicio | URL |
+| --- | --- |
+| Web | <http://localhost:8082/oj/> |
+| Panel | <http://localhost:8083/admin/> |
+| API | <http://localhost:8088/api> |
+| IDE | <http://localhost:3000/ide/> |
+| LSP | <http://localhost:3001/healthz> |
+| MariaDB | `localhost:3307` |
+
+Usuarios de prueba: `patito`/`patito` y `patitoAdmin`/`patitoAdmin`.
+
+Notas:
+
+- `.env.development` y `config/patito-web.dev.env` se generan una sola vez por máquina y no se versionan. Si cambias `.env.development`, vuelve a correr el script para regenerar la configuración de la web.
+- La web lee `config/patito-web.dev.env`, montado sobre el `.env.local` que trae versionado `patito-client-web`.
+- La base de desarrollo vive en `db/dev_mysql_data/`, separada de la de producción. Para empezar de cero: detén el stack y borra esa carpeta.
+- Usa el mismo `db/init/` que producción, más los datos de prueba de `patito-client-web`.
+
 ## Estructura del proyecto
 
 ```text
@@ -105,9 +160,11 @@ La ruta `/` también entra a la web. El dashboard de Traefik no se publica.
 │   ├── init/                  scripts para una base nueva
 │   └── mysql_data/            datos de MariaDB
 ├── scripts/                   permisos y generación de judge.conf
+├── src/                       repos clonados para desarrollo (no versionado)
 ├── traefik/                   reglas y certificados
 ├── .env.example               configuración sin secretos
 ├── docker-compose.yml          servicios base
+├── docker-compose.dev.yml      desarrollo desde el código fuente
 └── docker-compose.traefik.yml  proxy HTTPS
 ```
 
