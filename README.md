@@ -26,8 +26,7 @@ Antes de levantar el stack, revisa `.env` y cambia:
 Las contraseñas y tokens van solo en `.env`. En `config/` están los archivos que se montan en los servicios:
 
 - `appsettings.json`: API. Las conexiones y el JWT se pasan por variables de entorno.
-- `admin.config.js`: URL de la API para el panel.
-- `patito-ide.config.json`: URL de la API para el IDE.
+- `admin.config.js` y `patito-ide.config.json`: usan rutas relativas (`/api`), así sirven para cualquier dominio detrás de Traefik.
 - `patito-web.env`: vacío, la web usa las variables del compose.
 
 Las variables están separadas por grupo en `.env.example`:

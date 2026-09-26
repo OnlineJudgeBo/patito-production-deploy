@@ -119,8 +119,6 @@ services:
   admin-ui:
     image: ghcr.io/onlinejudgebo/patito-admin-ui:main
     restart: unless-stopped
-    volumes:
-     - ./config/admin.config.js:/usr/share/nginx/html/admin/config.js
     depends_on:
       - api
     environment:

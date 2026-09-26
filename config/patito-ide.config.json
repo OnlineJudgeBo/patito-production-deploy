@@ -1,6 +1,6 @@
 {
   "adapter": "vibe",
-  "apiBaseUrl": "https://jv.umsa.bo/api",
+  "apiBaseUrl": "/api",
   "paths": {
     "context": "/patito-ide/context",
     "run": "/patito-ide/custom-input",

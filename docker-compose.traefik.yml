@@ -91,6 +91,8 @@ services:
 
   admin-ui:
     ports: !reset []
+    volumes:
+      - ./config/admin.config.js:/usr/share/nginx/html/admin/config.js:ro
     labels:
       traefik.enable: "true"
 
