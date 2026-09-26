@@ -1,6 +1,7 @@
 # control-server
 
 Copia del control-server de `icpcbo-live` (`control-server/`, 2026-09-26), sin cambios en el código.
+Los SVG `icpc-bolivia-logo.svg` e `icpc-bolivia-wallpaper.svg` llevan el logo de Patito; conservan el nombre porque `server.py` los sirve con esa ruta.
 Maneja las PCs de laboratorio del ISO: registro, comandos firmados, estado y alertas.
 
 En Patito:
