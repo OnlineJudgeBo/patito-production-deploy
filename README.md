@@ -23,6 +23,15 @@ Antes de levantar el stack, revisa `.env` y cambia:
 - puertos y URLs públicas;
 - `PATITO_HOST` y el correo de Let's Encrypt si usarás Traefik.
 
+Una base nueva arranca con dos usuarios, problemas y concursos de ejemplo:
+
+| Usuario | Contraseña | Rol |
+| --- | --- | --- |
+| `patitoAdmin` | `patitoAdmin` | administrador |
+| `patito` | `patito` | estudiante |
+
+Cambia esas contraseñas al entrar por primera vez.
+
 Las contraseñas y tokens van solo en `.env`. En `config/` están los archivos que se montan en los servicios:
 
 - `appsettings.json`: API. Las conexiones y el JWT se pasan por variables de entorno.
