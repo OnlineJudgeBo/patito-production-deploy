@@ -23,7 +23,11 @@ Antes de levantar el stack, revisa `.env` y cambia:
 - puertos y URLs públicas;
 - `PATITO_HOST` y el correo de Let's Encrypt si usarás Traefik.
 
-No dejes claves de desarrollo en un servidor público.
+Las contraseñas y tokens van solo en `.env`. En `config/` están los archivos que se montan en los servicios:
+
+- `appsettings.json`: API. Las conexiones y el JWT se pasan por variables de entorno.
+- `admin.config.js` y `patito-ide.config.json`: usan rutas relativas (`/api`), así sirven para cualquier dominio detrás de Traefik.
+- `patito-web.env`: vacío, la web usa las variables del compose.
 
 Las variables están separadas por grupo en `.env.example`:
 
@@ -54,7 +58,7 @@ LSP ──────────> IDE
 
 No hace falta iniciar contenedor por contenedor. `docker compose up -d` levanta el stack y respeta los `depends_on` definidos en el archivo.
 
-Para desarrollo desde el código fuente se usa el `docker-compose.yml` de la carpeta superior. El compose de esta carpeta descarga imágenes ya publicadas.
+Este compose descarga imágenes ya publicadas. Para trabajar sobre el código fuente usa el entorno de [desarrollo local](#desarrollo-local).
 
 ## Levantar por puertos
 
@@ -93,6 +97,34 @@ El DNS de `PATITO_HOST` debe apuntar al servidor. También deben estar abiertos 
 
 La ruta `/` también entra a la web. El dashboard de Traefik no se publica.
 
+## Desarrollo local
+
+Para trabajar con el código fuente:
+
+```bash
+./scripts/init-development-local.sh --up
+```
+
+El script clona los repos en `src/`, crea `.env.development` con claves locales y levanta todo con `docker-compose.dev.yml`. Si los repos ya están clonados, los actualiza. Usa `--https` si no tienes SSH configurado en GitHub.
+
+Para levantarlo después:
+
+```bash
+docker compose --env-file .env.development -f docker-compose.dev.yml up -d
+```
+
+| Servicio | URL |
+| --- | --- |
+| Web | <http://localhost:8082/oj/> |
+| Panel | <http://localhost:8083/admin/> |
+| API | <http://localhost:8088/api> |
+| IDE | <http://localhost:3000/ide/> |
+| MariaDB | `localhost:3307` |
+
+Usuarios de prueba: `patito`/`patito` y `patitoAdmin`/`patitoAdmin`.
+
+Para empezar con una base limpia, detén el stack y borra `db/dev_mysql_data/`.
+
 ## Estructura del proyecto
 
 ```text
@@ -105,9 +137,11 @@ La ruta `/` también entra a la web. El dashboard de Traefik no se publica.
 │   ├── init/                  scripts para una base nueva
 │   └── mysql_data/            datos de MariaDB
 ├── scripts/                   permisos y generación de judge.conf
+├── src/                       repos clonados para desarrollo (no versionado)
 ├── traefik/                   reglas y certificados
 ├── .env.example               configuración sin secretos
 ├── docker-compose.yml          servicios base
+├── docker-compose.dev.yml      desarrollo desde el código fuente
 └── docker-compose.traefik.yml  proxy HTTPS
 ```
 

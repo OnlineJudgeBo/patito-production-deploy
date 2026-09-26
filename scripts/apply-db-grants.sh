@@ -22,7 +22,8 @@ cat <<SQL | docker compose exec -T patito-db mariadb -uroot -p"${MARIADB_ROOT_PA
 CREATE USER IF NOT EXISTS '${MARIADB_USER}'@'%' IDENTIFIED BY '${MARIADB_PASSWORD}';
 GRANT ALL PRIVILEGES ON \`${MARIADB_DATABASE}\`.* TO '${MARIADB_USER}'@'%';
 GRANT ALL PRIVILEGES ON \`schedule_management\`.* TO '${MARIADB_USER}'@'%';
+GRANT ALL PRIVILEGES ON \`academic\`.* TO '${MARIADB_USER}'@'%';
 FLUSH PRIVILEGES;
 SQL
 
-echo "Granted ${MARIADB_USER} access to ${MARIADB_DATABASE} and schedule_management."
+echo "Granted ${MARIADB_USER} access to ${MARIADB_DATABASE} schedule_management and academic."

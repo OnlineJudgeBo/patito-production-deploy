@@ -99,8 +99,11 @@ services:
       ASPNETCORE_URLS: http://+:8080
       ConnectionStrings__DefaultConnection: server=patito-db;database=${MARIADB_DATABASE};user=${MARIADB_USER};pwd=${MARIADB_PASSWORD};AllowZeroDateTime=True;ConvertZeroDateTime=True;convert zero datetime=True
       ConnectionStrings__ScheduleConnection: server=patito-db;database=schedule_management;user=${MARIADB_USER};pwd=${MARIADB_PASSWORD};AllowZeroDateTime=True;ConvertZeroDateTime=True;convert zero datetime=True
+      ConnectionStrings__AcademicConnection: server=patito-db;database=academic;user=${MARIADB_USER};pwd=${MARIADB_PASSWORD};AllowZeroDateTime=True;ConvertZeroDateTime=True;convert zero datetime=True
       Base__Url: ${PATITO_WEB_PUBLIC_URL}
       Jwt__Key: ${VIBE_IDE_TOKEN_SECRET}
+      Jwt__Issuer: ${JWT_ISS}
+      Jwt__Audience: ${JWT_AUD}
       FileSettings__ProblemsFilePath: /tmp/zas
       VIBE_IDE_TOKEN_SECRET: ${VIBE_IDE_TOKEN_SECRET}
       PATITO_IDE_TOKEN_SECRET: ${VIBE_IDE_TOKEN_SECRET}
@@ -109,14 +112,13 @@ services:
       TZ: ${TZ}
     volumes:
       - ./data/judge/data:/tmp/zas
+      - ./config/appsettings.json:/app/appsettings.json:ro
     ports:
       - "${ADMIN_API_PORT}:8080"
 
   admin-ui:
     image: ghcr.io/onlinejudgebo/patito-admin-ui:main
     restart: unless-stopped
-    volumes:
-     - ./config/admin.config.js:/usr/share/nginx/html/admin/config.js
     depends_on:
       - api
     environment:
@@ -158,6 +160,7 @@ services:
       NEXT_PUBLIC_JUDGE_API_URL: ${ADMIN_API_PUBLIC_URL}
       NEXT_PUBLIC_JUDGE_WS_URL: ${ADMIN_API_PUBLIC_WS_URL}
       NEXT_PUBLIC_VIBE_IDE_CONTEXT_URL: ${VIBE_IDE_CONTEXT_URL}
+      PATITO_IDE_TOKEN_SECRET: ${VIBE_IDE_TOKEN_SECRET}
       LSP_AUTH_TOKEN: ${LSP_AUTH_TOKEN}
       LSP_SERVER_WS_BASE: ws://patito-lsp-server:3001
       PATITO_IDE_TOKEN_AUD: ${JWT_AUD}
