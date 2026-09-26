@@ -114,9 +114,14 @@ services:
       PATITO_IDE_TOKEN_SECRET: ${VIBE_IDE_TOKEN_SECRET}
       PATITO_IDE_TOKEN_ISS: ${VIBE_IDE_TOKEN_ISS}
       PATITO_IDE_TOKEN_AUD: ${VIBE_IDE_TOKEN_AUD}
+      ControlServer__Url: http://control-server:8090
+      ControlServer__GroupsFile: /app/control/groups.json
+      ControlServer__TokenSecret: ${CONTROL_TOKEN_SECRET}
+      ControlServer__LobbyEnrollToken: ${CONTROL_LOBBY_ENROLL_TOKEN}
       TZ: ${TZ}
     volumes:
       - ./data/dev/judge/data:/tmp/zas
+      - ./control/dev/config:/app/control
     ports:
       - "${ADMIN_API_PORT}:8080"
     networks:
@@ -128,12 +133,30 @@ services:
     image: patito-admin-ui:dev
     depends_on:
       - api
-    volumes:
-      - ./config/admin.dev.config.js:/usr/share/nginx/html/admin/config.js:ro
     environment:
       TZ: ${TZ}
     ports:
       - "${ADMIN_UI_PORT}:80"
+    networks:
+      - patito
+
+  control-server:
+    build:
+      context: ./control-server
+    image: patito-control-server:dev
+    environment:
+      CONTROL_BIND: 0.0.0.0:8090
+      CONTROL_SERVER_NAME: localhost
+      CONTROL_GROUP_TOKENS: /app/config/groups.json
+      CONTROL_SIGNING_KEY: /app/keys/command-signing.key
+      CONTROL_DB: /app/data/control.db
+      TZ: ${TZ}
+    volumes:
+      - ./control/dev/keys:/app/keys:ro
+      - ./control/dev/config:/app/config
+      - ./control/dev/data:/app/data
+    ports:
+      - "${CONTROL_PORT}:8090"
     networks:
       - patito
 

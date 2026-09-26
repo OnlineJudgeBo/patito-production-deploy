@@ -106,6 +106,32 @@ El DNS de `PATITO_HOST` debe apuntar al servidor. También deben estar abiertos 
 
 La ruta `/` también entra a la web. El dashboard de Traefik no se publica.
 
+## Máquinas de laboratorio
+
+Para exámenes en PCs con el ISO de concurso. Cada concurso marcado como examen es un grupo de máquinas; se ven y se manejan desde el concurso, en el panel admin.
+
+1. Genera la clave con la que se firman los comandos:
+
+   ```bash
+   mkdir -p control/keys control/config control/data
+   openssl genpkey -algorithm ed25519 -out control/keys/command-signing.key
+   openssl pkey -in control/keys/command-signing.key -pubout -out control/keys/command-signing.pub
+   ```
+
+2. En `.env` completa `CONTROL_TOKEN_SECRET` y `CONTROL_LOBBY_ENROLL_TOKEN`.
+3. Arma el ISO con esta configuración en `config/iso.conf`:
+
+   ```bash
+   AUTH_SERVICE_URL="https://<PATITO_HOST>/api/lab/login"
+   CONTROL_SERVICE_URL="https://<PATITO_HOST>/control"
+   GROUP_ID="lobby"
+   ENROLL_TOKEN="<CONTROL_LOBBY_ENROLL_TOKEN>"
+   ```
+
+   y hornea `control/keys/command-signing.pub` como clave pública del ISO. El dominio de Patito tiene que estar en la allowlist de red para que los alumnos lleguen al juez.
+
+Los alumnos inician sesión en la PC con su cuenta de Patito. Si tienen un examen activo, la PC pasa al grupo de ese examen; si no, el login se rechaza.
+
 ## Desarrollo local
 
 Para trabajar con el código fuente:
@@ -139,6 +165,8 @@ Para empezar con una base limpia, detén el stack y borra `db/dev_mysql_data/`.
 ```text
 .
 ├── config/                    archivos montados en los clientes
+├── control/                   claves, grupos y datos del control de máquinas (no versionado)
+├── control-server/            control de máquinas de laboratorio (copia de icpcbo-live)
 ├── data/
 │   ├── judge/                 configuración y problemas
 │   └── vibe-lsp/              workspace y caché
