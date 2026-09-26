@@ -17,14 +17,7 @@ services:
       - "${MARIADB_PORT}:3306"
     volumes:
       - ./db/dev_mysql_data:/var/lib/mysql
-      # Same init as production, plus demo users (patito/patito, patitoAdmin/patitoAdmin).
-      - ./db/init/01-jol.sql:/docker-entrypoint-initdb.d/01-jol.sql:ro
-      - ./db/init/02-schedule-management.sql:/docker-entrypoint-initdb.d/02-schedule-management.sql:ro
-      - ./db/init/03-grant-app-user.sh:/docker-entrypoint-initdb.d/03-grant-app-user.sh:ro
-      - ./db/init/04-academic.sql:/docker-entrypoint-initdb.d/04-academic.sql:ro
-      - ./db/init/05-contest-exam-monitoring.sql:/docker-entrypoint-initdb.d/05-contest-exam-monitoring.sql:ro
-      - ./db/init/06-problem-sample-case.sql:/docker-entrypoint-initdb.d/06-problem-sample-case.sql:ro
-      - ./src/patito-client-web/docker/database/02-seed.sql:/docker-entrypoint-initdb.d/90-dev-seed.sql:ro
+      - ./db/init:/docker-entrypoint-initdb.d:ro
     networks:
       patito:
         aliases:
