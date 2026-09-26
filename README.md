@@ -118,7 +118,7 @@ Para exámenes en PCs con el ISO de concurso. Cada concurso marcado como examen 
    openssl pkey -in control/keys/command-signing.key -pubout -out control/keys/command-signing.pub
    ```
 
-2. En `.env` completa `CONTROL_TOKEN_SECRET` y `CONTROL_LOBBY_ENROLL_TOKEN`.
+2. En `.env` completa `CONTROL_TOKEN_SECRET`, `CONTROL_LOBBY_ENROLL_TOKEN` y `CONTROL_ADMIN_TOKEN`.
 3. Arma el ISO con esta configuración en `config/iso.conf`:
 
    ```bash

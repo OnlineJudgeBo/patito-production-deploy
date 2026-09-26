@@ -113,6 +113,7 @@ services:
       ControlServer__GroupsFile: /app/control/groups.json
       ControlServer__TokenSecret: ${CONTROL_TOKEN_SECRET}
       ControlServer__LobbyEnrollToken: ${CONTROL_LOBBY_ENROLL_TOKEN}
+      ControlServer__AdminToken: ${CONTROL_ADMIN_TOKEN}
       ControlServer__SiteId: ${SITE_ID:-1}
       TZ: ${TZ}
     volumes:
@@ -144,7 +145,7 @@ services:
       CONTROL_GROUP_TOKENS: /app/config/groups.json
       CONTROL_SIGNING_KEY: /app/keys/command-signing.key
       CONTROL_DB: /app/data/control.db
-      CONTROL_ADMIN_TOKEN: ${CONTROL_ADMIN_TOKEN:-}
+      CONTROL_ADMIN_TOKEN: ${CONTROL_ADMIN_TOKEN}
       TZ: ${TZ}
     volumes:
       - ./control/keys:/app/keys:ro

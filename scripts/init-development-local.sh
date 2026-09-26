@@ -45,7 +45,7 @@ done
 if [ ! -f .env.development ]; then
   cp .env.development.example .env.development
   # Local-only secrets, generated once per machine.
-  for key in MARIADB_ROOT_PASSWORD MARIADB_PASSWORD JWT_SECRET VIBE_IDE_TOKEN_SECRET LSP_AUTH_TOKEN CONTROL_TOKEN_SECRET CONTROL_LOBBY_ENROLL_TOKEN; do
+  for key in MARIADB_ROOT_PASSWORD MARIADB_PASSWORD JWT_SECRET VIBE_IDE_TOKEN_SECRET LSP_AUTH_TOKEN CONTROL_TOKEN_SECRET CONTROL_LOBBY_ENROLL_TOKEN CONTROL_ADMIN_TOKEN; do
     sed -i "s|^$key=.*|$key=$(openssl rand -hex 32)|" .env.development
   done
   echo "==> created .env.development with random local secrets"
