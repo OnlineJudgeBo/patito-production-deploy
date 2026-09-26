@@ -114,6 +114,7 @@ services:
       ControlServer__TokenSecret: ${CONTROL_TOKEN_SECRET}
       ControlServer__LobbyEnrollToken: ${CONTROL_LOBBY_ENROLL_TOKEN}
       ControlServer__AdminToken: ${CONTROL_ADMIN_TOKEN}
+      ControlServer__LogoUrl: https://${PATITO_HOST}/control/icpc-bolivia-logo.svg
       ControlServer__SiteId: ${SITE_ID:-1}
       TZ: ${TZ}
     volumes:
