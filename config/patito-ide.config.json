@@ -1,0 +1,24 @@
+{
+  "adapter": "vibe",
+  "apiBaseUrl": "https://jv.umsa.bo/api",
+  "paths": {
+    "context": "/patito-ide/context",
+    "run": "/patito-ide/custom-input",
+    "runStatus": "/patito-ide/runs/{id}",
+    "submit": "/patito-ide/submissions",
+    "submissionStatus": "/patito-ide/submissions/{id}",
+    "submissionStream": "/patito-ide/submissions/{id}/events"
+  },
+  "features": {
+    "run": true,
+    "submit": true,
+    "websocket": false,
+    "polling": true,
+    "lsp": true
+  },
+  "mathJax": {
+    "enabled": true,
+    "src": "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
+  },
+  "pollingIntervalMs": 1500
+}

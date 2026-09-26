@@ -1,2 +1,13 @@
 # Local deployment variables/secrets
 .env
+
+# Runtime data
+db/mysql_data/
+data/
+traefik/letsencrypt/
+
+# Local development
+src/
+.env.development
+config/patito-web.dev.env
+db/dev_mysql_data/
