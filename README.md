@@ -73,8 +73,8 @@ Este compose descarga imágenes ya publicadas. Para trabajar sobre el código fu
 
 ```bash
 cd patito-public-deploy
-docker compose pull
-docker compose up -d
+docker compose pull --ignore-buildable
+docker compose up -d --build
 docker compose ps
 ```
 
@@ -90,8 +90,10 @@ docker compose --profile tools up -d
 docker compose \
   -f docker-compose.yml \
   -f docker-compose.traefik.yml \
-  up -d
+  up -d --build
 ```
+
+`control-server` no tiene imagen publicada: se construye en el servidor (`--build`) y `pull --ignore-buildable` lo salta.
 
 El DNS de `PATITO_HOST` debe apuntar al servidor. También deben estar abiertos los puertos 80 y 443.
 
@@ -191,8 +193,8 @@ El kernel genera `data/judge/etc/judge.conf` con `scripts/write-judge-conf.sh`. 
 ```bash
 docker compose ps
 docker compose logs -f api patito-web patito-judge-kernel
-docker compose pull
-docker compose up -d
+docker compose pull --ignore-buildable
+docker compose up -d --build
 ```
 
 Si una base antigua no tiene los permisos del usuario de la aplicación, ejecuta `./scripts/apply-db-grants.sh`.
