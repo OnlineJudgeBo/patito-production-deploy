@@ -109,9 +109,17 @@ services:
       PATITO_IDE_TOKEN_SECRET: ${VIBE_IDE_TOKEN_SECRET}
       PATITO_IDE_TOKEN_ISS: ${JWT_ISS}
       PATITO_IDE_TOKEN_AUD: ${JWT_AUD}
+      ControlServer__Url: http://control-server:8090
+      ControlServer__GroupsFile: /app/control/groups.json
+      ControlServer__TokenSecret: ${CONTROL_TOKEN_SECRET}
+      ControlServer__LobbyEnrollToken: ${CONTROL_LOBBY_ENROLL_TOKEN}
+      ControlServer__AdminToken: ${CONTROL_ADMIN_TOKEN}
+      ControlServer__LogoUrl: https://${PATITO_HOST}/control/icpc-bolivia-logo.svg
+      ControlServer__SiteId: ${SITE_ID:-1}
       TZ: ${TZ}
     volumes:
       - ./data/judge/data:/tmp/zas
+      - ./control/config:/app/control
       - ./config/appsettings.json:/app/appsettings.json:ro
     ports:
       - "${ADMIN_API_PORT}:8080"
@@ -125,6 +133,25 @@ services:
       TZ: ${TZ}
     ports:
       - "${ADMIN_UI_PORT}:80"
+
+  control-server:
+    # Lab machines of exam contests (ISO). Groups are written by the API into control/config.
+    build:
+      context: ./control-server
+    image: patito-control-server:local
+    restart: unless-stopped
+    environment:
+      CONTROL_BIND: 0.0.0.0:8090
+      CONTROL_SERVER_NAME: ${PATITO_HOST}
+      CONTROL_GROUP_TOKENS: /app/config/groups.json
+      CONTROL_SIGNING_KEY: /app/keys/command-signing.key
+      CONTROL_DB: /app/data/control.db
+      CONTROL_ADMIN_TOKEN: ${CONTROL_ADMIN_TOKEN}
+      TZ: ${TZ}
+    volumes:
+      - ./control/keys:/app/keys:ro
+      - ./control/config:/app/config
+      - ./control/data:/app/data
 
   patito-lsp-server:
     image: ghcr.io/onlinejudgebo/patito-ide-lsp-server:main

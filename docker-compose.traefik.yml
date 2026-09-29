@@ -75,6 +75,18 @@ services:
       traefik.http.routers.vibe-lsp.middlewares: lsp-strip-prefix@file
       traefik.http.services.vibe-lsp.loadbalancer.server.port: 3001
 
+  control-server:
+    labels:
+      traefik.enable: "true"
+      # Only what the lab machines call (and the login logo); /admin stays reachable from the API only.
+      traefik.http.routers.control.rule: Host(`${PATITO_HOST}`) && (PathPrefix(`/control/enroll`) || PathPrefix(`/control/cmd/`) || Path(`/control/icpc-bolivia-logo.svg`) || Path(`/control/icpc-bolivia-wallpaper.svg`))
+      traefik.http.routers.control.entrypoints: websecure
+      traefik.http.routers.control.tls: "true"
+      traefik.http.routers.control.tls.certresolver: ${TRAEFIK_CERT_RESOLVER}
+      traefik.http.routers.control.priority: 100
+      traefik.http.routers.control.middlewares: control-strip-prefix@file
+      traefik.http.services.control.loadbalancer.server.port: 8090
+
   patito-ide:
     ports: !reset []
     volumes:

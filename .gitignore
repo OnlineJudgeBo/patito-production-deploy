@@ -6,6 +6,9 @@ db/mysql_data/
 data/
 traefik/letsencrypt/
 
+# Lab machines control-server: keys, groups and state
+control/
+
 # Local development
 src/
 .env.development
