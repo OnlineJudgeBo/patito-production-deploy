@@ -11,6 +11,10 @@ http:
       stripPrefix:
         prefixes:
           - /lsp
+    control-strip-prefix:
+      stripPrefix:
+        prefixes:
+          - /control
     pma-strip-prefix:
       stripPrefix:
         prefixes:
