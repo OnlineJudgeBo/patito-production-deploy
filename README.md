@@ -43,7 +43,7 @@ Las variables están separadas por grupo en `.env.example`:
 | Grupo | Variables principales |
 | --- | --- |
 | MariaDB | `MARIADB_DATABASE`, `MARIADB_USER`, `MARIADB_PASSWORD`, `MARIADB_ROOT_PASSWORD`, `MARIADB_PORT` |
-| Kernel | `OJ_HOST_NAME`, `OJ_USER_NAME`, `OJ_PASSWORD`, `OJ_DB_NAME`, `OJ_*` de tiempo, memoria y lenguajes |
+| Kernel | `OJ_HOST_NAME`, `OJ_USER_NAME`, `OJ_PASSWORD`, `OJ_DB_NAME`, `OJ_RUNNING`, `OJ_SLEEP_TIME`, `OJ_JAVA_*`, `OJ_SIM_ENABLE` |
 | Web | `PATITO_WEB_PUBLIC_URL`, `APP_DOMAIN*`, `SITE_ID`, `THEME_TEMPLATE` |
 | API | `ADMIN_API_PUBLIC_URL`, `ASPNETCORE_ENVIRONMENT`, `JWT_ISS`, `JWT_AUD` |
 | IDE | `VIBE_IDE_PUBLIC_URL`, `VIBE_IDE_CONTEXT_URL`, `VIBE_IDE_TOKEN_SECRET` |
@@ -175,7 +175,7 @@ Para empezar con una base limpia, detén el stack y borra `db/dev_mysql_data/`.
 ├── db/
 │   ├── init/                  scripts para una base nueva
 │   └── mysql_data/            datos de MariaDB
-├── scripts/                   permisos y generación de judge.conf
+├── scripts/                   permisos y generación de judge.json
 ├── src/                       repos clonados para desarrollo (no versionado)
 ├── traefik/                   reglas y certificados
 ├── .env.example               configuración sin secretos
@@ -186,7 +186,17 @@ Para empezar con una base limpia, detén el stack y borra `db/dev_mysql_data/`.
 
 Los scripts de `db/init/` corren solamente cuando `db/mysql_data/` está vacío. No borres esa carpeta ni uses `docker compose down -v` si quieres conservar la base.
 
-El kernel genera `data/judge/etc/judge.conf` con `scripts/write-judge-conf.sh`. Para conectarse a MariaDB usa `MARIADB_USER` y `MARIADB_PASSWORD`, no la cuenta root.
+El kernel (`patito-sandbox-kernel`) genera `data/judge/etc/judge.json` con `scripts/write-judge-conf.sh`. Corre como contenedor privilegiado y el servidor necesita cgroup v2; se comprueba con `docker run --rm --privileged ghcr.io/onlinejudgebo/patito-sandbox-kernel:develop --check`. Para conectarse a MariaDB usa `MARIADB_USER` y `MARIADB_PASSWORD`, no la cuenta root.
+
+## Actualizar una instalación existente
+
+Los scripts de `db/init/` no vuelven a correr sobre una base con datos. Al actualizar, aplica a mano los que sean nuevos, por ejemplo el de puntajes por subtareas:
+
+```bash
+docker compose exec -T patito-db sh -c 'mariadb -uroot -p"$MARIADB_ROOT_PASSWORD"' < db/init/08-group-scoring.sql
+docker compose pull
+docker compose up -d
+```
 
 ## Comandos de uso diario
 
