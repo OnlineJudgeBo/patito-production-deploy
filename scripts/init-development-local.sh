@@ -22,7 +22,7 @@ REPOS=(
   "patito-admin-front:patito-admin-front:main"
   "patito-ide:patito-ide:main"
   "patito-ide-lsp-server:patito-ide-lsp-server:main"
-  "onlinejudge-kernel:onlinejudge-kernel:master"
+  "patito-sandbox-kernel:patito-sandbox-kernel:develop"
 )
 
 mkdir -p src

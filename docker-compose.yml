@@ -53,15 +53,14 @@ services:
       - "${PATITO_WEB_PORT}:80"
 
   patito-judge-kernel:
-    image: ghcr.io/onlinejudgebo/onlinejudgebo-kernel:develop
+    image: ghcr.io/onlinejudgebo/patito-sandbox-kernel:develop
     restart: unless-stopped
     depends_on:
       - patito-db
-    user: root
+    # isolate crea namespaces y un cgroup por ejecución; el host necesita cgroup v2.
+    privileged: true
     environment:
-      LANG: en_US.UTF-8
-      HOME: /home/judge
-      CONF: /home/judge/etc/judge.conf
+      CONF: /home/judge/etc/judge.json
       TZ: ${TZ}
       OJ_HOST_NAME: ${OJ_HOST_NAME}
       OJ_USER_NAME: ${OJ_USER_NAME}
@@ -75,16 +74,10 @@ services:
       OJ_JAVA_XMS: ${OJ_JAVA_XMS}
       OJ_JAVA_XMX: ${OJ_JAVA_XMX}
       OJ_SIM_ENABLE: ${OJ_SIM_ENABLE}
-      OJ_OI_MODE: ${OJ_OI_MODE}
-      OJ_SHM_RUN: ${OJ_SHM_RUN}
-      OJ_USE_MAX_TIME: ${OJ_USE_MAX_TIME}
-      OJ_LANG_SET: ${OJ_LANG_SET}
     entrypoint:
       - /bin/bash
-      - -lc
-      - /opt/patito/write-judge-conf.sh && exec /usr/bin/judged /home/judge
-    tty: true
-    stdin_open: true
+      - -c
+      - /opt/patito/write-judge-conf.sh && exec /usr/local/bin/entrypoint.sh
     volumes:
       - ./data/judge:/home/judge
       - ./scripts/write-judge-conf.sh:/opt/patito/write-judge-conf.sh:ro
@@ -116,6 +109,7 @@ services:
       ControlServer__AdminToken: ${CONTROL_ADMIN_TOKEN}
       ControlServer__LogoUrl: https://${PATITO_HOST}/control/icpc-bolivia-logo.svg
       ControlServer__SiteId: ${SITE_ID:-1}
+      OpenRouter__ApiKey: ${OPENROUTER_API_KEY:-}
       TZ: ${TZ}
     volumes:
       - ./data/judge/data:/tmp/zas
