@@ -38,6 +38,9 @@ services:
       MAIL_USER_NAME: ${MAIL_USER_NAME:-}
       MAIL_SUBJECT: ${MAIL_SUBJECT:-Juez Virtual}
       MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      # IPs and texts blocked from the admin panel; without the token the web skips them.
+      BLOCK_RULES_URL: http://api:8080/api/blockrules/active
+      BLOCK_RULES_TOKEN: ${BLOCK_RULES_TOKEN:-}
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
       TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID:-}
       DB_HOST: patito-db
@@ -103,6 +106,7 @@ services:
       PATITO_IDE_TOKEN_ISS: ${JWT_ISS}
       PATITO_IDE_TOKEN_AUD: ${JWT_AUD}
       ControlServer__Url: http://control-server:8090
+      BlockRules__Token: ${BLOCK_RULES_TOKEN:-}
       ControlServer__GroupsFile: /app/control/groups.json
       ControlServer__TokenSecret: ${CONTROL_TOKEN_SECRET}
       ControlServer__LobbyEnrollToken: ${CONTROL_LOBBY_ENROLL_TOKEN}
