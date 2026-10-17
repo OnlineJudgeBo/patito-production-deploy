@@ -43,8 +43,6 @@ services:
       - ./config/patito-web.dev.env:/var/www/html/client-web/.env.local:ro
     environment:
       TZ: ${TZ}
-      BLOCK_RULES_URL: http://api:8080/api/blockrules/active
-      BLOCK_RULES_TOKEN: ${BLOCK_RULES_TOKEN:-local-dev-block-rules-token}
     ports:
       - "${PATITO_WEB_PORT}:80"
     networks:
@@ -104,7 +102,6 @@ services:
       PATITO_IDE_TOKEN_ISS: ${VIBE_IDE_TOKEN_ISS}
       PATITO_IDE_TOKEN_AUD: ${VIBE_IDE_TOKEN_AUD}
       ControlServer__Url: http://control-server:8090
-      BlockRules__Token: ${BLOCK_RULES_TOKEN:-local-dev-block-rules-token}
       ControlServer__GroupsFile: /app/control/groups.json
       ControlServer__TokenSecret: ${CONTROL_TOKEN_SECRET}
       ControlServer__LobbyEnrollToken: ${CONTROL_LOBBY_ENROLL_TOKEN}
