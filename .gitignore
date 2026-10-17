@@ -14,3 +14,4 @@ src/
 .env.development
 config/patito-web.dev.env
 db/dev_mysql_data/
+traefik/logs/
