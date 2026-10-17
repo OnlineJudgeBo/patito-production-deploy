@@ -7,6 +7,28 @@ Este folder contiene archivos de Traefik usados por `../docker-compose.traefik.y
 - `dynamic/middlewares.yml`: compresion y eliminacion de los prefijos que los backends no conocen.
 - `letsencrypt/`: storage ACME (`acme.json`) para certificados automaticos.
 - `certs/`: reservado para certificados manuales si se decide no usar ACME.
+- `logs/access.json`: registro de peticiones en JSON. La API lo lee (solo lectura) para la página
+  **Bloqueos** del panel de administración.
+
+## Rotar el registro de peticiones
+
+Traefik no rota `logs/access.json` por su cuenta. En el servidor, `/etc/logrotate.d/patito-traefik`:
+
+```
+/ruta/a/patito-public-deploy/traefik/logs/access.json {
+  daily
+  rotate 7
+  compress
+  delaycompress
+  missingok
+  notifempty
+  postrotate
+    docker kill --signal=USR1 $(docker ps -qf name=traefik) >/dev/null 2>&1 || true
+  endscript
+}
+```
+
+`USR1` hace que Traefik vuelva a abrir el archivo después de rotarlo.
 
 ## Rutas en un solo host
 
