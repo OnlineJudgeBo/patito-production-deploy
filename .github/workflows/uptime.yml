@@ -1,0 +1,56 @@
+# Checks the sites every 5 minutes and tells Telegram when one goes down or comes back.
+# Repo variable MONITOR_URLS: one URL per line. Secrets: TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID.
+name: Uptime
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+concurrency: uptime
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Restore the last result
+        uses: actions/cache/restore@v4
+        with:
+          path: down.txt
+          key: uptime-${{ github.run_id }}
+          restore-keys: uptime-
+
+      - name: Check the URLs
+        env:
+          MONITOR_URLS: ${{ vars.MONITOR_URLS }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          touch down.txt
+          : > now.txt
+          while read -r url; do
+            [ -z "$url" ] && continue
+            code=$(curl -s -o /dev/null -w '%{http_code}' -m 20 --retry 2 --retry-all-errors "$url" || true)
+            case "$code" in 2*|3*) ;; *) echo "$url ($code)" >> now.txt ;; esac
+          done <<< "$MONITOR_URLS"
+          cat now.txt
+
+          # Only a change is reported, so an outage sends one message and its recovery another.
+          strip() { sed 's/ (.*)$//' "$1" | sort; }
+          went_down=$(comm -13 <(strip down.txt) <(strip now.txt))
+          came_back=$(comm -23 <(strip down.txt) <(strip now.txt))
+          message=""
+          [ -n "$went_down" ] && message+="🔴 Caído:"$'\n'"$(grep -F -f <(echo "$went_down") now.txt)"$'\n'
+          [ -n "$came_back" ] && message+="🟢 Volvió:"$'\n'"$came_back"
+          if [ -n "$message" ] && [ -n "$TELEGRAM_BOT_TOKEN" ]; then
+            curl -s -o /dev/null "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+              --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" --data-urlencode "text=${message}"
+          fi
+          mv now.txt down.txt
+
+      - name: Save the result
+        uses: actions/cache/save@v4
+        with:
+          path: down.txt
+          key: uptime-${{ github.run_id }}
